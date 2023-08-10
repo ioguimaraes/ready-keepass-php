@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<KeePassFile>
+    <Meta>
+        <Generator>KeePass</Generator>
+        <HeaderHash>%%HeaderHash%%</HeaderHash>
+        <DatabaseName>%%DatabaseName%%</DatabaseName>
+        <DatabaseNameChanged>%%DatabaseNameChanged%%</DatabaseNameChanged>
+        <DatabaseDescription>%%DatabaseDescription%%</DatabaseDescription>
+        <DatabaseDescriptionChanged>%%DatabaseDescriptionChanged%%</DatabaseDescriptionChanged>
+        <DefaultUserName>%%DefaultUserName%%</DefaultUserName>
+        <DefaultUserNameChanged>%%DefaultUserNameChanged%%</DefaultUserNameChanged>
+        <MaintenanceHistoryDays>%%MaintenanceHistoryDays%%</MaintenanceHistoryDays>
+        <Color>%%Color%%</Color>
+        <MasterKeyChanged>%%MaintenanceHistoryDays%%</MasterKeyChanged>
+        <MasterKeyChangeRec>%%MasterKeyChangeRec%%</MasterKeyChangeRec>
+        <MasterKeyChangeForce>%%MasterKeyChangeForce%%</MasterKeyChangeForce>
+        <MemoryProtection>
+            <ProtectTitle>%%ProtectTitle%%</ProtectTitle>
+            <ProtectUserName>%%ProtectUserName%%</ProtectUserName>
+            <ProtectPassword>%%ProtectPassword%%</ProtectPassword>
+            <ProtectURL>%%ProtectURL%%</ProtectURL>
+            <ProtectNotes>%%ProtectNotes%%</ProtectNotes>
+        </MemoryProtection>
+        <RecycleBinEnabled>%%RecycleBinEnabled%%</RecycleBinEnabled>
+        <RecycleBinUUID>%%RecycleBinUUID%%</RecycleBinUUID>
+        <RecycleBinChanged>%%RecycleBinChanged%%</RecycleBinChanged>
+        <EntryTemplatesGroup>%%EntryTemplatesGroup%%</EntryTemplatesGroup>
+        <EntryTemplatesGroupChanged>%%EntryTemplatesGroupChanged%%</EntryTemplatesGroupChanged>
+        <HistoryMaxItems>%%HistoryMaxItems%%</HistoryMaxItems>
+        <HistoryMaxSize>%%HistoryMaxSize%%</HistoryMaxSize>
+        <LastSelectedGroup>%%LastSelectedGroup%%</LastSelectedGroup>
+        <LastTopVisibleGroup>%%LastTopVisibleGroup%%</LastTopVisibleGroup>
+        <Binaries />
+        <CustomData />
+    </Meta>
+    <Root>
+        %%Root%%
+    </Root>
+</KeePassFile>
