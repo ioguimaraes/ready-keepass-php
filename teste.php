@@ -7,7 +7,7 @@ use KeePassPHP\Key\CompositeKey;
 use KeePassPHP\Lib\Database;
 
 $file = 'C:/Users/fz388/Documents/EmergencyAccountsLinux.kdbx';
-$new_f = 'C:/Users/fz388/Documents/EmergencyAccountsLinux_new.xml';
+$new_f = 'C:/Users/fz388/Documents/EmergencyAccountsLinux_new.dat';
 $secret = 'TSBRBrasil#0001';
 $err = '';
 
@@ -21,9 +21,13 @@ $ckey->addKey( KeePassPHP::keyFromPassword( $secret ) );
 
 //Open the databsae file
 $db = KeePassPHP::openDatabaseFile($file, $ckey, $err);
-$groups = $db->toArray();
-print_r($groups);
-die;
+//$db->setPasswordArray('eY5zYpaOgkOq39vubwSGGw==', 'testNewPassword#0000');
+//print_r($db->getPassword('eY5zYpaOgkOq39vubwSGGw=='));
+$groups = $db->toArray(false);
+$customer_list = array_column($groups['Root']['Group'][0]['Group'][0]['Group'], 'Name');
+//print_r($groups['Root']['Group'][0]['Group'][0]['Group']);
+//print_r($customer_list);
+//die;
 
 $kdbx_xml = $db->getContentXML();
 $kdbx_random_stream = $db->getRandomStream();
@@ -33,12 +37,11 @@ $kdbx_random_stream = $db->getRandomStream();
 $new_xml = $db->toXML($groups, $kdbx_xml, $kdbx_random_stream, $err);
 
 
-//$new_file = Database::loadFromArray($groups, 1,$err);
-
 $encrypt_file = KeePassPHP::encryptInKdbx($new_xml, $ckey, 8, $err);
-print_r(KeePassPHP::decryptFromKdbx($encrypt_file, $ckey, true, $err));
+$decrypt_file = KeePassPHP::decryptFromKdbx($encrypt_file, $ckey, true, $err);
+print_r($decrypt_file);
 die;
 
 $fp = fopen($new_f, 'w');
-fputs($fp, $new_xml);
+fputs($fp, $encrypt_file);
 fclose($fp);

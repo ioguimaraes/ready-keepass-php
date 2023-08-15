@@ -4,6 +4,7 @@ namespace KeePassPHP\Lib;
 
 use KeePassPHP\Filters\IFilter;
 use KeePassPHP\Util\String\IBoxedString;
+use KeePassPHP\Util\String\ProtectedString;
 
 /**
  * A class that manages a group of a KeePass 2.x password database.
@@ -46,6 +47,11 @@ class Group
      * @var Entry[]
      */
     public $entries;
+    /**
+     * Complete Array of sub-groups of this group (if non null).
+     * @var Group[]
+     */
+    public $complete_group = array();
 
     private function __construct()
     {
@@ -80,6 +86,26 @@ class Group
             }
         }
         return null;
+    }
+
+    public function setPassword($uuid, $pass)
+    {
+        if ($this->entries != null) {
+            foreach ($this->entries as &$entry) {
+                if ($entry->uuid === $uuid) {
+                    $entry->password = new ProtectedString($pass, base64_encode($pass));
+                    return true;
+                }
+            }
+        }
+        if ($this->groups != null) {
+            foreach ($this->groups as &$group) {
+                $value = $group->setPassword($uuid, $pass);
+                if ($value != null)
+                    return $value;
+            }
+        }
+        return false;
     }
 
     /**
@@ -235,29 +261,43 @@ class Group
      * a KeePass 2.x database and located at a Group element node.
      * @param $reader ProtectedXMLReader A XML reader.
      * @param Database|null $context The database being built, for context
-     * @return Group A Group instance if the parsing went okay, null otherwise.
+     * @param Bool $basic_view A bool define view mode of data xml processing.
      */
-    public static function loadFromXML(ProtectedXMLReader $reader, Database $context = null)
+    public static function loadFromXML(ProtectedXMLReader $reader, Database $context = null, $basic_view = true)
     {
-        if ($reader == null)
-            return null;
+        if ($reader == null) return null;
         $group = new Group();
         $d = $reader->depth();
         while ($reader->read($d)) {
-            if ($reader->isElement(Database::XML_GROUP))
-                $group->addGroup(Group::loadFromXML($reader, $context));
-            elseif ($reader->isElement(Database::XML_ENTRY))
-                $group->addEntry(Entry::loadFromXML($reader, $context));
-            elseif ($reader->isElement(Database::XML_UUID))
-                $group->uuid = $reader->readTextInside();
-            elseif ($reader->isElement(Database::XML_NAME))
-                $group->name = $reader->readTextInside();
-            elseif ($reader->isElement(Database::XML_ICONID))
-                $group->icon = $reader->readTextInside();
-            elseif ($reader->isElement(Database::XML_CUSTOMICONUUID))
-                $group->customIcon = $reader->readTextInside();
+            if($basic_view) {
+                if ($reader->isElement(Database::XML_GROUP))
+                    $group->addGroup(Group::loadFromXML($reader, $context));
+                elseif ($reader->isElement(Database::XML_ENTRY))
+                    $group->addEntry(Entry::loadFromXML($reader, $context));
+                elseif ($reader->isElement(Database::XML_UUID))
+                    $group->uuid = $reader->readTextInside();
+                elseif ($reader->isElement(Database::XML_NAME))
+                    $group->name = $reader->readTextInside();
+                elseif ($reader->isElement(Database::XML_ICONID))
+                    $group->icon = $reader->readTextInside();
+                elseif ($reader->isElement(Database::XML_CUSTOMICONUUID))
+                    $group->customIcon = $reader->readTextInside();
+            } else {
+                if ($reader->isElement(Database::XML_GROUP))
+                    $group->complete_group['Group'][] = Group::loadFromXML($reader, $context, $basic_view);
+                elseif ($reader->isElement(Database::XML_ENTRY))
+                    $group->complete_group['Entry'][] = Entry::loadFromXML($reader, $context, $basic_view);
+                elseif ($reader->isElement('Times')) {
+                    $times = $reader->depth();
+                    while ($reader->read($times)) {
+                        $group->complete_group['Times'][$reader->elementName()] = $reader->readTextInside() ?: '';
+                    }
+                }
+                else
+                    $group->complete_group[$reader->elementName()] = $reader->readTextInside();
+            }
         }
-        return $group;
+        return $basic_view ? $group : $group->complete_group;
     }
 
     public static function loadToXML(ProtectedXMLReader $reader, Database $context = null)

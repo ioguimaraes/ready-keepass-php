@@ -214,7 +214,7 @@ class KdbxFile
         $header = new KdbxHeader();
         $header->cipher = KdbxHeader::CIPHER_AES;
         $header->compression = KdbxHeader::COMPRESSION_NONE;
-        $header->randomStream = KdbxHeader::RANDOMSTREAM_NONE;
+        $header->randomStream = KdbxHeader::RANDOMSTREAM_SALSA20;
         $header->rounds = pack('V', $rounds) . "\x00\x00\x00\x00";
         $file = new KdbxFile($header);
         return $file->prepareEncrypting($error) ? $file : null;
@@ -255,6 +255,9 @@ class KdbxFile
                 return null;
             }
         }
+
+//        print_r($randomStream);
+//        die;
 
         $cipherMethod = $header->cipher === KdbxHeader::CIPHER_AES
             ? 'aes-256-cbc' : null;

@@ -61,6 +61,11 @@ class Entry
      * @var $history array
      */
     public $history;
+    /**
+     * Complete Array of entries of this entry's (if non null).
+     * @var $history array
+     */
+    public $complete_entry;
 
     public function __construct()
     {
@@ -113,8 +118,9 @@ class Entry
     /**
      * Parses a string XML element node.
      * @param $reader ProtectedXMLReader A XML reader located at a string element node.
+     * @param $basic_view Bool A bool define view mode of data xml processing.
      */
-    private function readString(ProtectedXMLReader $reader)
+    private function readString(ProtectedXMLReader $reader, $basic_view = true)
     {
         $d = $reader->depth();
         $key = null;
@@ -125,10 +131,14 @@ class Entry
             elseif ($reader->isElement(Database::XML_STRING_VALUE))
                 $value = $reader->readTextInside(true);
         }
-        if (empty($key) || $value == null)
+        if ((empty($key) || $value == null) && $basic_view)
             return;
-        if (strcasecmp($key, Database::KEY_PASSWORD) == 0)
+        if (strcasecmp($key, Database::KEY_PASSWORD) == 0 && $basic_view)
             $this->password = $value;
+        elseif(strcasecmp($key, Database::KEY_PASSWORD) == 0 && !$basic_view)
+            $this->complete_entry['String'][Database::KEY_PASSWORD] = 'Encrypted, use function getPassword($uuid)';
+        elseif(!$basic_view)
+            $this->complete_entry['String'][$key] = $value->getPlainString();
         else
             $this->stringFields[$key] = $value;
     }
@@ -252,36 +262,57 @@ class Entry
      * a KeePass 2.x database and located at an Entry element node.
      * @param $reader ProtectedXMLReader A XML reader.
      * @param Database|null $context The database being built, for context
-     * @return Entry A Entry instance if the parsing went okay, null otherwise.
+     * @param Bool $basic_view A bool define view mode of data xml processing.
      */
-    public static function loadFromXML(ProtectedXMLReader $reader, Database $context = null)
+    public static function loadFromXML(ProtectedXMLReader $reader, Database $context = null, $basic_view = true)
     {
-        if ($reader == null)
-            return null;
+        if ($reader == null) return null;
         $entry = new Entry();
         $d = $reader->depth();
         while ($reader->read($d)) {
-            if ($reader->isElement(Database::XML_UUID))
-                $entry->uuid = $reader->readTextInside();
-            elseif ($reader->isElement(Database::XML_ICONID))
-                $entry->icon = $reader->readTextInside();
-            elseif ($reader->isElement(Database::XML_CUSTOMICONUUID))
-                $entry->customIcon = $reader->readTextInside();
-            else if ($reader->isElement(Database::XML_TAGS))
-                $entry->tags = $reader->readTextInside();
-            elseif ($reader->isElement(Database::XML_STRING))
-                $entry->readString($reader);
-            elseif ($reader->isElement(Database::XML_BINARY))
-                $entry->readBinary($reader, $context);
-            elseif ($reader->isElement(Database::XML_HISTORY)) {
-                $historyD = $reader->depth();
-                while ($reader->read($historyD)) {
-                    if ($reader->isElement(Database::XML_ENTRY))
-                        $entry->addHistoryEntry(self::loadFromXML($reader, $context));
+            if($basic_view) {
+                if ($reader->isElement(Database::XML_UUID))
+                    $entry->uuid = $reader->readTextInside();
+                elseif ($reader->isElement(Database::XML_ICONID))
+                    $entry->icon = $reader->readTextInside();
+                elseif ($reader->isElement(Database::XML_CUSTOMICONUUID))
+                    $entry->customIcon = $reader->readTextInside();
+                else if ($reader->isElement(Database::XML_TAGS))
+                    $entry->tags = $reader->readTextInside();
+                elseif ($reader->isElement(Database::XML_STRING))
+                    $entry->readString($reader);
+                elseif ($reader->isElement(Database::XML_BINARY))
+                    $entry->readBinary($reader, $context);
+                elseif ($reader->isElement(Database::XML_HISTORY)) {
+                    $historyD = $reader->depth();
+                    while ($reader->read($historyD)) {
+                        if ($reader->isElement(Database::XML_ENTRY))
+                            $entry->addHistoryEntry(self::loadFromXML($reader, $context));
+                    }
                 }
+            } else {
+                if ($reader->isElement('Times')) {
+                    $times = $reader->depth();
+                    while ($reader->read($times)) {
+                        $entry->complete_entry['Times'][$reader->elementName()] = $reader->readTextInside() ?: '';
+                    }
+                }
+                elseif ($reader->isElement(Database::XML_STRING)) {
+                    $entry->readString($reader, $basic_view);
+                }
+                elseif ($reader->isElement(Database::XML_HISTORY)) {
+                    $historyD = $reader->depth();
+                    while ($reader->read($historyD)) {
+                        if ($reader->isElement(Database::XML_ENTRY))
+                            $entry->addHistoryEntry(self::loadFromXML($reader, $context));
+                    }
+                }
+                else
+                $entry->complete_entry[$reader->elementName()] = $reader->readTextInside();
             }
         }
-        return $entry;
+
+        return $basic_view ? $entry : $entry->complete_entry;
     }
 }
 

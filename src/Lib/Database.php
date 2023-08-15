@@ -151,14 +151,23 @@ class Database
         if ($this->_groups != null) {
             foreach ($this->_groups as &$group) {
                 $value = $group->getPassword($uuid);
-//                echo "Teste database -----\r\n";
-//                print_r($value);
-//                die;
                 if ($value != null)
                     return $value->getPlainString();
             }
         }
         return null;
+    }
+
+    public function setPasswordArray($uuid, $pass)
+    {
+        if ($this->_groups != null) {
+            foreach ($this->_groups as &$group) {
+                $value = $group->setPassword($uuid, $pass);
+                if ($value) return true;
+                else return false;
+            }
+        }
+        return false;
     }
 
     /**
@@ -294,29 +303,58 @@ class Database
     /**
      * Creates an array describing this database (with respect to the filter).
      * This array can be safely serialized to json after.
+     * @param Bool $basic_view A bool define view mode of data xml processing.
      * @param IFilter $filter A filter to select the data that is actually copied to
      *                the array (if null, it will serialize everything except
      *                from passowrds).
      * @return array[string] An array containing this database (except passwords).
      */
-    public function toArray(IFilter $filter = null)
+    public function toArray($basic_view = true, IFilter $filter = null)
     {
-        if ($filter == null)
-            $filter = new AllExceptFromPasswordsFilter();
+        if ($filter == null) $filter = new AllExceptFromPasswordsFilter();
         $result = array();
-        if ($this->_name != null)
-            $result[self::XML_DATABASENAME] = $this->_name;
-        if ($this->_customIcons != null && $filter->acceptIcons())
-            $result[self::XML_CUSTOMICONS] = $this->_customIcons;
-        if ($this->_groups != null) {
-            $groups = array();
-            foreach ($this->_groups as &$group) {
-                if ($filter->acceptGroup($group))
-                    $groups[] = $group->toArray($filter);
+
+        if($basic_view) {
+            if ($this->_name != null)
+                $result[self::XML_DATABASENAME] = $this->_name;
+            if ($this->_customIcons != null && $filter->acceptIcons())
+                $result[self::XML_CUSTOMICONS] = $this->_customIcons;
+            if ($this->_groups != null) {
+                $groups = array();
+                foreach ($this->_groups as &$group) {
+                    if ($filter->acceptGroup($group))
+                        $groups[] = $group->toArray($filter);
+                }
+                if (!empty($groups))
+                    $result[self::GROUPS] = $groups;
             }
-            if (!empty($groups))
-                $result[self::GROUPS] = $groups;
+        } else {
+            $reader = new ProtectedXMLReader($this->_randomStream);
+            $reader->XML($this->_contentXML);
+            $reader->read(-1);
+            $d = $reader->depth();
+            while ($reader->read($d)) {
+                if ($reader->isElement(self::XML_META)) {
+                    $metaD = $reader->depth();
+                    while ($reader->read($metaD)) {
+                        if ($reader->isElement('MemoryProtection')) {
+                            $MemoryProtection = $reader->depth();
+                            while ($reader->read($MemoryProtection)) {
+                                $result[self::XML_META]['MemoryProtection'][$reader->elementName()] = $reader->readTextInside() ?: '';
+                            }
+                        } else $result[self::XML_META][$reader->elementName()] = $reader->readTextInside() ?: '';
+                    }
+                }
+                elseif ($reader->isElement(self::XML_ROOT)) {
+                    $rootD = $reader->depth();
+                    while ($reader->read($rootD)) {
+                        if ($reader->isElement(self::XML_GROUP))
+                            $result[self::XML_ROOT][self::XML_GROUP][] = Group::loadFromXML($reader, $this, $basic_view);
+                    }
+                }
+            }
         }
+
         return $result;
     }
 
@@ -344,8 +382,8 @@ class Database
                 }
             }
         }
-        print_r($standard_file);
-        die;
+//        print_r($standard_file);
+//        die;
 
         $error = null;
         return $xml;
@@ -428,6 +466,9 @@ class Database
         $kdbx = KdbxFile::decrypt($reader, $key, $error);
         if ($kdbx == null)
             return null;
+
+//        print_r($kdbx->getContent());
+//        die;
 
         $db = self::loadFromXML($kdbx->getContent(), $kdbx->getRandomStream(),
             $error);

@@ -38,7 +38,7 @@ class AllExceptFromPasswordsFilter implements IFilter
 
     public function acceptPasswords()
     {
-        return true;
+        return false;
     }
 
     public function acceptStrings($key)

@@ -605,7 +605,7 @@ abstract class KeePassPHP
      *                    content (use true if the kdbx file was created with
      *                    the metod encryptInKdbx()).
      * @param string &$error A string that will receive a message in case of error.
-     * @return string|false The decrypted embedded string, or null in case of error.
+     * @return Database A new Database instance decrypted embedded string, or null in case of error.
      */
     public static function decryptFromKdbx($content, IKey $key, $headerHash,
                                            &$error)
@@ -626,7 +626,10 @@ abstract class KeePassPHP
             }
             $content = substr($content, $hashLen);
         }
-        return $content;
+
+        $db = Database::loadFromXML($content, $result->getRandomStream(), $error);
+        if ($db == null) throw new KeePassPHPException($error);
+        return $db;
     }
 
     /*********************
