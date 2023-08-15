@@ -9,11 +9,14 @@
     "manager",
     "security",
     "encryption",
+    "decryption",
     "openssl",
     "cipher",
     "cryptography",
+    "decryptography",
     "crypto",
-    "encrypt"
+    "encrypt",
+    "decrypt"
   ],
   "authors": [
     {
