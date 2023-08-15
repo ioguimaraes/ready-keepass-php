@@ -37,6 +37,8 @@
     "ext-xmlreader": "*",
     "ext-zlib": "*"
   },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "suggest": {
     "ext-mcrypt": "An alternative to the preferred OpenSSL encryption",
     "ext-openssl": "A better and faster alternative to mcrypt"
