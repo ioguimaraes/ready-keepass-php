@@ -77,6 +77,7 @@ class Database
     private $_headerHash;
     private $_contentXML;
     private $_randomStream;
+    private $_standardFileXML;
 
     private function __construct()
     {
@@ -158,6 +159,20 @@ class Database
         return null;
     }
 
+    public function getPasswords(array $content)
+    {
+        if($content != null) {
+            $data = null;
+
+            foreach ($content as $key => $value) {
+                if(is_array($value)) Database::getPasswords($content);
+                else $data[$key] = Database::getPassword($value);
+            }
+
+            return $data;
+        }
+        return null;
+    }
     public function setPasswordArray($uuid, $pass)
     {
         if ($this->_groups != null) {
@@ -168,6 +183,32 @@ class Database
             }
         }
         return false;
+    }
+
+    public function getEntriesUUID(array $content, $basic_view = false)
+    {
+        if($content != null) {
+            $data = array();
+
+            foreach ($content as $key => $value) {
+                if(is_int($key))
+                    $basic_view
+                    ? $data = array_merge($data,  Database::getEntriesUUID($value, $basic_view))
+                    : $data[$value['Name']]= Database::getEntriesUUID($value, $basic_view);
+                elseif($key == 'Group')
+                    $data = Database::getEntriesUUID($value, $basic_view);
+                elseif($key == 'Entry') {
+                    $entry = null;
+                    foreach ($value as $e) {
+                        $entry[$e['String']['Title']] = $e['UUID'];
+                    }
+                    $data = $entry;
+                }
+            }
+
+            return $data;
+        }
+        return null;
     }
 
     /**
@@ -358,35 +399,35 @@ class Database
         return $result;
     }
 
-    public function toXML(array $content, $xml, IRandomStream $randomStream, &$error)
+    public static function setStandardFile($content)
     {
+        $db = new Database();
+        $db->_standardFileXML = $content;
+        return $db;
+    }
 
-        $standard_file = file_get_contents(__DIR__ . "/../../standard.xml");
-
-        $reader = new ProtectedXMLReader($randomStream);
-        $reader->XML($xml);
-        $reader->read(-1);
-        $d = $reader->depth();
-        while ($reader->read($d)) {
-            if ($reader->isElement(self::XML_META)) {
-                $metaD = $reader->depth();
-                while ($reader->read($metaD)) {
-                    $standard_file = str_replace("%%{$reader->elementName()}%%", $reader->readTextInside() ?: '', $standard_file);
-                }
-            }
-            elseif ($reader->isElement(self::XML_ROOT)) {
-                $rootD = $reader->depth();
-                while ($reader->read($rootD)) {
-                    if ($reader->isElement(self::XML_GROUP))
-                        $this->addGroup(Group::loadFromXML($reader, $this));
-                }
-            }
+    public function getStandardFile()
+    {
+        return $this->_standardFileXML;
+    }
+    public function toXML(array $content, &$error)
+    {
+        if($content == null) {
+            $error = "Database array load: array is empty.";
+            return null;
         }
-//        print_r($standard_file);
-//        die;
+
+        foreach($content as $key => $value) {
+            if($key === 'Group') {
+                $groups = Group::toXML($value);
+                $this->_standardFileXML = str_replace("%%Root%%", "{$groups}" ?: '', $this->_standardFileXML);
+            }
+            elseif(is_array($value)) $this->toXML($value, $error);
+            else $this->_standardFileXML = str_replace("%%{$key}%%", $value ?: '', $this->_standardFileXML);
+        }
 
         $error = null;
-        return $xml;
+        return $this->_standardFileXML;
     }
 
     /**
@@ -466,9 +507,6 @@ class Database
         $kdbx = KdbxFile::decrypt($reader, $key, $error);
         if ($kdbx == null)
             return null;
-
-//        print_r($kdbx->getContent());
-//        die;
 
         $db = self::loadFromXML($kdbx->getContent(), $kdbx->getRandomStream(),
             $error);

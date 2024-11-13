@@ -4,8 +4,6 @@ require_once 'vendor/autoload.php';
 
 use KeePassPHP\KeePassPHP;
 use KeePassPHP\Key\CompositeKey;
-use KeePassPHP\Lib\Database;
-use KeePassPHP\Util\Reader\ResourceReader;
 
 $file = 'C:/Users/fz388/Documents/EmergencyAccountsLinux_new.dat';
 $secret = 'TSBRBrasil#0001';
@@ -22,4 +20,5 @@ $fp = file_get_contents($file);
 //$db = KeePassPHP::openDatabaseFile($file, $ckey, $err);
 $decrypt_file = KeePassPHP::decryptFromKdbx($fp, $ckey, true, $err);
 
-print_r($decrypt_file['db_intance']->toArray(false));
+print_r($decrypt_file->toArray(false));
+print_r($decrypt_file->getPassword('eY5zYpaOgkOq39vubwSGGw=='));

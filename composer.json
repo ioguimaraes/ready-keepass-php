@@ -35,7 +35,10 @@
     "ext-hash": "*",
     "ext-json": "*",
     "ext-xmlreader": "*",
-    "ext-zlib": "*"
+    "ext-zlib": "*",
+    "ext-libxml": "*",
+    "ext-dom": "*",
+    "ext-simplexml": "*"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,

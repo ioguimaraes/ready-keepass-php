@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<KeePassFile>
+    <Meta>
+        <Generator>KeePass</Generator>
+        <DatabaseName>%%DatabaseName%%</DatabaseName>
+        <MemoryProtection>
+            <ProtectTitle>%%ProtectTitle%%</ProtectTitle>
+            <ProtectUserName>%%ProtectUserName%%</ProtectUserName>
+            <ProtectPassword>%%ProtectPassword%%</ProtectPassword>
+            <ProtectURL>%%ProtectURL%%</ProtectURL>
+            <ProtectNotes>%%ProtectNotes%%</ProtectNotes>
+        </MemoryProtection>
+    </Meta>
+    <Root>
+        %%Root%%
+    </Root>
+</KeePassFile>

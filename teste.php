@@ -22,22 +22,23 @@ $ckey->addKey( KeePassPHP::keyFromPassword( $secret ) );
 //Open the databsae file
 $db = KeePassPHP::openDatabaseFile($file, $ckey, $err);
 //$db->setPasswordArray('eY5zYpaOgkOq39vubwSGGw==', 'testNewPassword#0000');
-//print_r($db->getPassword('eY5zYpaOgkOq39vubwSGGw=='));
 $groups = $db->toArray(false);
-$customer_list = array_column($groups['Root']['Group'][0]['Group'][0]['Group'], 'Name');
-//print_r($groups['Root']['Group'][0]['Group'][0]['Group']);
-//print_r($customer_list);
-//die;
+//print_r($groups);
+//print_r($db->getPassword('DwRDwrLlFUWdvdSz0qBMSg=='));
 
 $kdbx_xml = $db->getContentXML();
 $kdbx_random_stream = $db->getRandomStream();
 
+print_r($groups);
+print_r($kdbx_xml);
+die;
 
 
 $new_xml = $db->toXML($groups, $kdbx_xml, $kdbx_random_stream, $err);
 
 
 $encrypt_file = KeePassPHP::encryptInKdbx($new_xml, $ckey, 8, $err);
+die;
 $decrypt_file = KeePassPHP::decryptFromKdbx($encrypt_file, $ckey, true, $err);
 print_r($decrypt_file);
 die;

@@ -2,6 +2,7 @@
 
 namespace KeePassPHP\Lib;
 
+use DOMDocument;
 use KeePassPHP\Filters\IFilter;
 use KeePassPHP\Util\String\IBoxedString;
 use KeePassPHP\Util\String\ProtectedString;
@@ -225,6 +226,29 @@ class Group
                 $result[Database::ENTRIES] = $entries;
         }
         return $result;
+    }
+
+    public static function toXML(array $content)
+    {
+
+        $data = null;
+
+        foreach ($content as $key => $value) {
+            if(is_int($key)) $data .= "<Group>" . Group::toXML($value) . "</Group>";
+            elseif($key === 'Times') {
+                $data .= "<Times>";
+                foreach ($value as $key_times => $value_times) {
+                    $data .= "\n<{$key_times}>{$value_times}</{$key_times}>";
+                }
+                $data .= "</Times>";
+            }
+            elseif($key === 'Group') $data .= Group::toXML($value);
+            elseif($key === 'Entry') $data .= Entry::toXML($value);
+            else
+                $data .= "<{$key}>{$value}</{$key}>";
+        }
+
+        return $data;
     }
 
     /**

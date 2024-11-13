@@ -218,6 +218,34 @@ class Entry
         return $result;
     }
 
+    public static function toXML(array $content)
+    {
+
+        $data = null;
+
+        foreach ($content as $key => $value) {
+            if(is_int($key)) {
+                $data .= "<Entry>" . Entry::toXML($value) . "</Entry>";
+            }
+            elseif($key === 'Times') {
+                $data .= "<Times>";
+                foreach ($value as $key_times => $value_times) {
+                    $data .= "\n<{$key_times}>{$value_times}</{$key_times}>";
+                }
+                $data .= "</Times>";
+            }
+            elseif($key === 'String') {
+                foreach ($value as $key_string => $value_string) {
+                    $data .= "<String><Key>{$key_string}</Key><Value>{$value_string}</Value></String>";
+                }
+            }
+            else
+                $data .= "<{$key}>{$value}</{$key}>";
+        }
+
+        return $data;
+    }
+
     /**
      * Creates a new Entry instance from an array created by the method
      * toArray() of another Entry instance.

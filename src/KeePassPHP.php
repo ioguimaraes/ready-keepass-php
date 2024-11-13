@@ -3,6 +3,7 @@
 
 namespace KeePassPHP;
 
+use DOMDocument;
 use Exception;
 use KeePassPHP\Filters\IFilter;
 use KeePassPHP\Kdbx\KdbxFile;
@@ -593,6 +594,7 @@ abstract class KeePassPHP
         $kdbx = KdbxFile::createForEncrypting($rounds, $error);
         if ($kdbx == null)
             return null;
+        print_r($kdbx->getHeaderHash());
         return $kdbx->encrypt($kdbx->getHeaderHash() . $content, $key, $error);
     }
 
@@ -626,6 +628,9 @@ abstract class KeePassPHP
             }
             $content = substr($content, $hashLen);
         }
+
+        print_r($content);
+        die;
 
         $db = Database::loadFromXML($content, $result->getRandomStream(), $error);
         if ($db == null) throw new KeePassPHPException($error);
@@ -688,9 +693,22 @@ abstract class KeePassPHP
         return $kphpdb;
     }
 
-
-    public static function createDatabaseFile()
+    public static function createUUID($hashcode)
     {
+        $l = 31;
+        $better_token = md5(uniqid(rand(), true) . $hashcode);
+        $rem = strlen($better_token)-$l;
+        $unique_code = substr($better_token, 0, -$rem);
+        return base64_encode(pack("h*", $unique_code));
+    }
 
+    public static function formatXML($xml)
+    {
+        $dom = new DOMDocument;
+        $dom->preserveWhiteSpace = FALSE;
+        $dom->loadXML($xml);
+        $dom->formatOutput = TRUE;
+
+        return $dom->saveXml();
     }
 }
